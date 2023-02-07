@@ -15,7 +15,7 @@ import {
   Linking,
 } from 'react-native';
 import {WebView} from 'react-native-webview';
-import {WebViewNativeEvent} from 'react-native-webview/lib/WebViewTypes';
+import {WebViewMessageEvent, WebViewNativeEvent} from 'react-native-webview/lib/WebViewTypes';
 import {requestMultiple, PERMISSIONS} from 'react-native-permissions';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 
@@ -102,6 +102,10 @@ class App extends React.Component<Props, State> {
     ) {
       this.setState({launchWebview: false});
     }
+  }
+
+  async onWebviewMessage(event: WebViewMessageEvent) {
+    console.log('EVENT RECIEVED:', JSON.parse(event.nativeEvent.data));
   }
 
   async openLink() {
@@ -212,6 +216,7 @@ class App extends React.Component<Props, State> {
               javaScriptEnabled={true}
               allowsInlineMediaPlayback
               mediaPlaybackRequiresUserAction={false}
+              onMessage={(e) => this.onWebviewMessage(e)}
             />
           </>
         )}
