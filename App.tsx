@@ -15,7 +15,10 @@ import {
   Linking,
 } from 'react-native';
 import {WebView} from 'react-native-webview';
-import {WebViewMessageEvent, WebViewNativeEvent} from 'react-native-webview/lib/WebViewTypes';
+import {
+  WebViewMessageEvent,
+  WebViewNativeEvent,
+} from 'react-native-webview/lib/WebViewTypes';
 import {requestMultiple, PERMISSIONS} from 'react-native-permissions';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 
@@ -65,6 +68,8 @@ class App extends React.Component<Props, State> {
     this.onChangeText = this.onChangeText.bind(this);
     this.launch = this.launch.bind(this);
     this.onStateChange = this.onStateChange.bind(this);
+    this.openLink = this.openLink.bind(this);
+    this.closeLink = this.closeLink.bind(this);
   }
   webviewRef = React.createRef();
 
@@ -106,10 +111,19 @@ class App extends React.Component<Props, State> {
 
   async onWebviewMessage(event: WebViewMessageEvent) {
     console.log('EVENT RECIEVED:', JSON.parse(event.nativeEvent.data));
+    const message = JSON.parse(event.nativeEvent.data);
+    if (message.status === 'DIGILOCKER_OPEN') {
+      this.openLink(message.uri);
+    } else if (message.status === 'DIGILOCKER_CLOSE') {
+      this.closeLink();
+    }
   }
 
-  async openLink() {
-    const {url} = this.state;
+  closeLink() {
+    InAppBrowser.close();
+  }
+
+  async openLink(url: string) {
     try {
       if (await InAppBrowser.isAvailable()) {
         await InAppBrowser.open(url, {
@@ -146,7 +160,7 @@ class App extends React.Component<Props, State> {
         Linking.openURL(url);
       }
     } catch (error) {
-      this.openLink();
+      this.openLink(url);
     }
   }
 
@@ -189,7 +203,7 @@ class App extends React.Component<Props, State> {
                 style={[styles.button, styles.buttonOpen]}
                 onPress={() =>
                   this.setState({modalVisible: false}, () => {
-                    this.openLink();
+                    this.openLink(this.state.url);
                   })
                 }>
                 <Text style={styles.textStyle}>Open with In-app browser</Text>
@@ -216,7 +230,7 @@ class App extends React.Component<Props, State> {
               javaScriptEnabled={true}
               allowsInlineMediaPlayback
               mediaPlaybackRequiresUserAction={false}
-              onMessage={(e) => this.onWebviewMessage(e)}
+              onMessage={e => this.onWebviewMessage(e)}
             />
           </>
         )}
