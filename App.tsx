@@ -33,18 +33,29 @@ const requestAllPermissions = async () => {
         PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
       ]);
-      console.log(granted);
+
+      // Check if all permissions are granted
+      return Object.values(granted).every(status => status === PermissionsAndroid.RESULTS.GRANTED);
     } catch (err) {
       console.warn(err);
+      return false;
     }
   } else if (Platform.OS === 'ios') {
-    const result = await requestMultiple([
-      PERMISSIONS.IOS.CAMERA,
-      PERMISSIONS.IOS.LOCATION_WHEN_IN_USE,
-      PERMISSIONS.IOS.MICROPHONE,
-    ]);
-    console.log(result);
+    try {
+      const result = await requestMultiple([
+        PERMISSIONS.IOS.CAMERA,
+        PERMISSIONS.IOS.LOCATION_WHEN_IN_USE,
+        PERMISSIONS.IOS.MICROPHONE,
+      ]);
+
+      // Check if all permissions are granted
+      return Object.values(result).every(status => status === 'granted');
+    } catch (err) {
+      console.warn(err);
+      return false;
+    }
   }
+  return false;
 };
 
 interface Props {}
@@ -164,6 +175,15 @@ class App extends React.Component<Props, State> {
     }
   }
 
+  handlePress = async () => {
+        const permissionsGranted = await requestAllPermissions();
+        if (!permissionsGranted) {
+          Alert.alert('Permission Denied', 'You need to grant all permissions to proceed.');
+        } else {
+          this.setState({ modalVisible: false, launchWebview: true });
+        }
+    };
+
   render() {
     return (
       <SafeAreaView style={[styles.container, styles.horizontal]}>
@@ -211,7 +231,7 @@ class App extends React.Component<Props, State> {
               <Pressable
                 style={[styles.button, styles.buttonOpen]}
                 onPress={() =>
-                  this.setState({modalVisible: false, launchWebview: true})
+                  this.handlePress()
                 }>
                 <Text style={styles.textStyle}>Open with Webview</Text>
               </Pressable>
